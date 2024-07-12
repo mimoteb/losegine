@@ -1,0 +1,17 @@
+To improve the question answering model, consider the following changes:
+
+1. **Better Preprocessing**: Enhance the preprocessing of different document types to better extract relevant information. For PDFs and DOC files, consider using OCR (Optical Character Recognition) tools like `PyMuPDF` for PDFs and `python-docx` for DOC files to extract text with its original formatting. This can help in understanding the structure of the document and improve the model's performance.
+
+2. **Document Filtering**: Before processing, filter out irrelevant or low-quality documents. This can be based on file size, creation date, or any other criteria that might indicate the document's relevance or quality.
+
+3. **Question-Answer Pairs**: Currently, the model is trained on a single document at a time. To improve its ability to answer questions across multiple documents, consider training it on pairs of questions and answers that span multiple documents. This can help the model learn to relate information from different documents.
+
+4. **Fine-tuning**: Instead of training from scratch, consider fine-tuning a pre-trained model like `bert-base-uncased` on a similar task. This can save a lot of training time and potentially improve performance since the model will already have learned general language understanding capabilities.
+
+5. **Evaluation Metrics**: Implement evaluation metrics specific to question answering tasks, such as the F1 score or Exact Match (EM), to assess the model's performance. This will give a more accurate picture of how well the model is doing on answering questions correctly.
+
+6. **Model Architecture**: Consider using a more specialized model for question answering, such as `BART` or `T5`, which are designed for sequence-to-sequence tasks and might be better suited for question answering.
+
+7. **Data Augmentation**: Augment the training data by creating variations of the questions or adding related questions. This can help the model generalize better to new, unseen questions.
+
+8. **Domain-Specific Training**: If the questions are domain-specific, consider training on a dataset that is relevant to the domain. This can improve the model'
