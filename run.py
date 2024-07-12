@@ -3,8 +3,8 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'scripts')))
 
-from index_documents import index_documents
-from server import app
+from scripts.index_documents import index_documents
+from scripts.server import app
 
 if __name__ == '__main__':
     data_directory = '/home/solomon/data/lose_data/documents'
