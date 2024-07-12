@@ -13,12 +13,17 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 if __name__ == '__main__':
     data_directory = '/home/solomon/data/lose_data/documents'
     
-    # Check if the database already exists
+    # Force re-indexing for testing
+    force_reindex = True  # Change this to False to disable re-indexing
+
+    # Ensure the database path exists
     db_path = '/home/solomon/data/lose_data/database.db'
-    if not os.path.exists(db_path):
+    if force_reindex or not os.path.exists(db_path):
         logging.info("Indexing documents...")
         index_documents(data_directory)
         logging.info("Indexing completed.")
-    
+    else:
+        logging.info("Database already exists. Skipping indexing.")
+
     logging.info("Starting Flask server...")
     app.run(host='0.0.0.0', port=5000)

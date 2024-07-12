@@ -37,10 +37,19 @@ def embed_text(text):
     return outputs.last_hidden_state.mean(dim=1).numpy()
 
 def index_documents(directory):
+    if not os.path.exists(directory):
+        logging.error(f'Directory {directory} does not exist.')
+        return
+
     document_count = 0
     for root, _, files in os.walk(directory):
         for file in files:
             file_path = os.path.join(root, file)
+            # Check if the document already exists
+            existing_doc = session.query(Document).filter_by(path=file_path).first()
+            if existing_doc:
+                logging.info(f'Document already exists in the database: {file_path}')
+                continue
             logging.info(f'Reading file: {file_path}')
             text = extract_text(file_path)
             if text:
@@ -49,16 +58,18 @@ def index_documents(directory):
                 doc = Document(path=file_path, embedding=embedding.tobytes())
                 session.add(doc)
                 document_count += 1
+            else:
+                logging.warning(f'No text extracted from file: {file_path}')
     session.commit()
     logging.info(f'Indexing completed. {document_count} documents indexed.')
-
-if __name__ == '__main__':
-    data_directory = '/home/solomon/data/lose_data/documents'
-    logging.info(f'Starting indexing for directory: {data_directory}')
-    index_documents(data_directory)
 
     # Verify indexed documents
     documents = session.query(Document).all()
     logging.info(f'{len(documents)} documents found in the database.')
     for doc in documents:
         logging.info(f'Document: {doc.path}')
+
+if __name__ == '__main__':
+    data_directory = '/home/solomon/data/lose_data/documents'
+    logging.info(f'Starting indexing for directory: {data_directory}')
+    index_documents(data_directory)
