@@ -14,11 +14,14 @@ model_name = 'distiluse-base-multilingual-cased'
 model = SentenceTransformer(model_name)
 
 def embed_text(text):
-    return model.encode([text])[0]
+    embedding = model.encode([text])[0]
+    print(f'Embedding shape: {embedding.shape}')
+    return embedding
 
 def search(query, top_n=5):
     print(f'Searching for query: {query}')
     query_embedding = embed_text(query)
+    print(f'Query embedding shape: {query_embedding.shape}')
     documents = session.query(Document).all()
     if not documents:
         print('No documents found in the database.')
@@ -26,8 +29,15 @@ def search(query, top_n=5):
     similarities = {}
     for doc in documents:
         doc_embedding = np.frombuffer(doc.embedding, dtype=np.float32)
+        print(f'Document embedding shape: {doc_embedding.shape}')
+        # Check for dimension mismatch
+        if doc_embedding.shape[0] != query_embedding.shape[0]:
+            print(f'Dimension mismatch: {doc_embedding.shape[0]} vs {query_embedding.shape[0]}')
+            continue  # Skip this document or handle it appropriately
         similarity = cosine_similarity([query_embedding], [doc_embedding]).item()
         similarities[doc.id] = similarity
+
+        
     if not similarities:
         print('No similarities found.')
         return []
