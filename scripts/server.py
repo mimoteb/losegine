@@ -1,13 +1,13 @@
 from flask import Flask, request, render_template
 import logging
-from search import search
-from qa import answer_question
-from extract_text import extract_text
+from .search import search
+from .qa import answer_question
+from .extract_text import extract_text
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 app.config['DEBUG'] = True
 
 @app.route('/')
