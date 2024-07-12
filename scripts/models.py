@@ -9,8 +9,8 @@ class Document(Base):
     id = Column(Integer, primary_key=True)
     path = Column(String, unique=True)
     title = Column(String)
-    language = Column(String)
-    creation_date = Column(String)
+    # language = Column(String)
+    # creation_date = Column(String)
     content = Column(Text)
     embedding = Column(LargeBinary)
 
