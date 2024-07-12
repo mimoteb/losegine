@@ -18,3 +18,4 @@ haystack-ai
 python-docx
 pdfminer
 pdfplumber
+chardet
