@@ -8,7 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from .index_documents import Document, DATABASE_URL
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname=s - %(message)s')
 
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
@@ -48,8 +48,3 @@ def search(query):
 
 if __name__ == '__main__':
     query = "Your query here"
-    result = search(query)
-    if result:
-        print(result)
-    else:
-        print("No matching documents found.")
