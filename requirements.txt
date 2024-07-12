@@ -1,6 +1,6 @@
 transformers
 torch
-pdfminer.ix
+pdfminer.six
 flask
 pytesseract
 Pillow
