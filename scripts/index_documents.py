@@ -27,8 +27,11 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased', cache_dir='/home/solomon/data/lose_data/models')
-model = DistilBertModel.from_pretrained('distilbert-base-uncased', cache_dir='/home/solomon/data/lose_data/models')
+model_name = 'distilbert-base-uncased'
+cache_dir = '/home/solomon/data/lose_data/models'
+
+tokenizer = DistilBertTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
+model = DistilBertModel.from_pretrained(model_name, cache_dir=cache_dir)
 
 def embed_text(text):
     inputs = tokenizer(text, return_tensors='pt', max_length=512, truncation=True)
