@@ -8,7 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from .index_documents import Document, DATABASE_URL
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime=s - %(levelname=s - %(message=s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
@@ -25,13 +25,13 @@ def embed_text(text):
         outputs = model(**inputs)
     return outputs.last_hidden_state.mean(dim=1).numpy()
 
-def search(query):
+def search(query, top_n=5):
     logging.info(f'Searching for query: {query}')
     query_embedding = embed_text(query)
     documents = session.query(Document).all()
     if not documents:
         logging.info('No documents found in the database.')
-        return None
+        return []
     similarities = {}
     for doc in documents:
         doc_embedding = np.frombuffer(doc.embedding, dtype=np.float32).reshape(1, -1)
@@ -39,17 +39,18 @@ def search(query):
         similarities[doc.id] = similarity
     if not similarities:
         logging.info('No similarities found.')
-        return None
-    top_doc_id = max(similarities, key=similarities.get)
-    top_doc = session.query(Document).filter_by(id=top_doc_id).first()
-    logging.info(f'Top document found: {top_doc.path}')
-    logging.info(f'Similarities: {similarities}')
-    return top_doc.path
+        return []
+    sorted_docs = sorted(similarities.items(), key=lambda item: item[1], reverse=True)[:top_n]
+    top_docs = [(session.query(Document).filter_by(id=doc_id).first(), sim) for doc_id, sim in sorted_docs]
+    for doc, sim in top_docs:
+        logging.info(f'Document: {doc.path} with similarity: {sim}')
+    return top_docs
 
 if __name__ == '__main__':
     query = "Your query here"
-    result = search(query)
-    if result:
-        print(result)
+    results = search(query, top_n=3)
+    if results:
+        for result in results:
+            print(f'Document: {result[0].path}, Similarity: {result[1]}')
     else:
         print("No matching documents found.")
