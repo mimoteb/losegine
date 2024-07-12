@@ -1,9 +1,15 @@
 import os
 import glob
 import pdfminer
-import python_docx
+import docx
 import pytesseract
+import torch
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering
+
+# Set working directory
+WORKING_DIR = "/home/solomon/data/lose_data"
+MODELS_DIR = os.path.join(WORKING_DIR, "models")
+DOCUMENTS_DIR = os.path.join(WORKING_DIR, "documents")
 
 # Document preprocessing
 def preprocess_documents(doc_type, file_path):
@@ -13,7 +19,7 @@ def preprocess_documents(doc_type, file_path):
             text = pdfminer.extractText(f)
     elif doc_type == 'doc':
         # Use python-docx to extract text from DOC file
-        doc = python_docx.Document(file_path)
+        doc = docx.Document(file_path)
         text = ''.join([p.text for p in doc.paragraphs])
     elif doc_type == 'jpg':
         # Use pytesseract to extract text from JPG file
@@ -47,13 +53,19 @@ class DocumentDataset:
         return len(self.files)
 
 # Create dataset and data loader
-files = glob.glob('path/to/your/documents/*')
-tokenizer = AutoTokenizer.from_pretrained('your_pretrained_model')
+files = []
+for root, dirs, files_in_dir in os.walk(DOCUMENTS_DIR):
+    for file in files_in_dir:
+        file_path = os.path.join(root, file)
+        files.append(file_path)
+
+tokenizer = AutoTokenizer.from_pretrained("deepset-roberta-base-squad2", local_files_only=True)
+model = AutoModelForQuestionAnswering.from_pretrained("deepset-roberta-base-squad2", local_files_only=True)
+
 dataset = DocumentDataset(files, tokenizer)
 data_loader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
 
 # Fine-tune the model
-model = AutoModelForQuestionAnswering.from_pretrained('your_pretrained_model')
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model.to(device)
 criterion = torch.nn.CrossEntropyLoss()
