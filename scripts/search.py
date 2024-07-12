@@ -40,6 +40,7 @@ def search(query):
     top_doc_id = max(similarities, key=similarities.get)
     top_doc = session.query(Document).filter_by(id=top_doc_id).first()
     logging.info(f'Top document found: {top_doc.path}')
+    logging.info(f'Similarities: {similarities}')
     return top_doc.path
 
 if __name__ == '__main__':

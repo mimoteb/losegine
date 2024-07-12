@@ -1,6 +1,8 @@
 from transformers import pipeline
 
-qa_pipeline = pipeline('question-answering', model='deepset/roberta-base-squad2')
+# Load the QA pipeline
+qa_pipeline = pipeline('question-answering')
 
 def answer_question(question, context):
-    return qa_pipeline(question=question, context=context)['answer']
+    result = qa_pipeline(question=question, context=context)
+    return result['answer']

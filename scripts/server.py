@@ -23,6 +23,9 @@ def search_endpoint():
         return render_template('search.html', no_results=True)
     context = extract_text(top_doc_path)
     answer = answer_question(query, context)
+    logging.info(f'Question: {query}')
+    logging.info(f'Document Path: {top_doc_path}')
+    logging.info(f'Answer: {answer}')
     return render_template('search.html', results={'document_path': top_doc_path, 'answer': answer})
 
 if __name__ == '__main__':
