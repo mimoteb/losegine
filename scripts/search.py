@@ -1,14 +1,10 @@
 import torch
 import numpy as np
-import logging
 from transformers import XLMRobertaTokenizer, XLMRobertaModel
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sklearn.metrics.pairwise import cosine_similarity
 from .index_documents import Document, DATABASE_URL
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime=s - %(levelname=s - %(message=s')
 
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
@@ -26,11 +22,11 @@ def embed_text(text):
     return outputs.last_hidden_state.mean(dim=1).numpy()
 
 def search(query, top_n=5):
-    logging.info(f'Searching for query: {query}')
+    print(f'Searching for query: {query}')
     query_embedding = embed_text(query)
     documents = session.query(Document).all()
     if not documents:
-        logging.info('No documents found in the database.')
+        print('No documents found in the database.')
         return []
     similarities = {}
     for doc in documents:
@@ -38,12 +34,12 @@ def search(query, top_n=5):
         similarity = cosine_similarity(query_embedding, doc_embedding).item()
         similarities[doc.id] = similarity
     if not similarities:
-        logging.info('No similarities found.')
+        print('No similarities found.')
         return []
     sorted_docs = sorted(similarities.items(), key=lambda item: item[1], reverse=True)[:top_n]
     top_docs = [(session.query(Document).filter_by(id=doc_id).first(), sim) for doc_id, sim in sorted_docs]
     for doc, sim in top_docs:
-        logging.info(f'Document: {doc.path} with similarity: {sim}')
+        print(f'Document: {doc.path} with similarity: {sim}')
     return top_docs
 
 if __name__ == '__main__':
