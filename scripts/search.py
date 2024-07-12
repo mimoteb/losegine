@@ -10,8 +10,8 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 def embed_text(text):
-    tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-    model = DistilBertModel.from_pretrained('distilbert-base-uncased')
+    tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased', cache_dir='/home/solomon/data/lose_data/models')
+    model = DistilBertModel.from_pretrained('distilbert-base-uncased', cache_dir='/home/solomon/data/lose_data/models')
     inputs = tokenizer(text, return_tensors='pt', max_length=512, truncation=True)
     with torch.no_grad():
         outputs = model(**inputs)

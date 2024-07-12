@@ -3,10 +3,10 @@ from scripts.server import app
 import os
 
 if __name__ == '__main__':
-    data_directory = '/home/solomon/data'
+    data_directory = '/home/solomon/data/lose_data/documents'
     
     # Check if the database already exists
-    db_path = './data/database.db'
+    db_path = '/home/solomon/data/lose_data/database.db'
     if not os.path.exists(db_path):
         print("Indexing documents...")
         index_documents(data_directory)
