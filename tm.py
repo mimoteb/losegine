@@ -1,45 +1,34 @@
 import os
-import glob
-import pdfminer
 import docx
-import pytesseract
-import torch
-from transformers import AutoTokenizer, AutoModelForQuestionAnswering
+from torch.utils.data import Dataset, DataLoader
+from transformers import AutoTokenizer, AutoModelForQuestionAnswering, Seq2SeqTrainingArguments, Trainer
 
-# Set working directory
+# Set working directory and model directory
 WORKING_DIR = "/home/solomon/data/lose_data"
 MODELS_DIR = os.path.join(WORKING_DIR, "models")
 DOCUMENTS_DIR = os.path.join(WORKING_DIR, "documents")
 
-# Document preprocessing
-def preprocess_documents(doc_type, file_path):
-    if doc_type == 'pdf':
-        # Use pdfminer to extract text from PDF file
-        with open(file_path, 'rb') as f:
-            text = pdfminer.extractText(f)
-    elif doc_type == 'doc':
-        # Use python-docx to extract text from DOC file
-        doc = docx.Document(file_path)
-        text = ''.join([p.text for p in doc.paragraphs])
-    elif doc_type == 'jpg':
-        # Use pytesseract to extract text from JPG file
-        text = pytesseract.image_to_string(file_path)
-    elif doc_type == 'txt':
-        # Simply read the text from TXT file
-        with open(file_path, 'r') as f:
-            text = f.read()
-    return text
+# Supported document types and their preprocessing functions
+DOC_TYPES = {
+    'pdf': (pdfminer.high_level.extract_text, 'rb'),
+    'doc': (docx.Document, ''),
+    'jpg': (pytesseract.image_to_string, 'rb'),
+    'txt': (open, 'r')
+}
 
-# Create dataset class
-class DocumentDataset:
-    def __init__(self, files, tokenizer):
-        self.files = files
+class DocumentDataset(Dataset):
+    def __init__(self, file_paths, tokenizer):
+        self.file_paths = file_paths
         self.tokenizer = tokenizer
 
+    def __len__(self):
+        return len(self.file_paths)
+
     def __getitem__(self, idx):
-        file_path = self.files[idx]
-        doc_type = file_path.split('.')[-1]
-        text = preprocess_documents(doc_type, file_path)
+        file_path, doc_type = self.file_paths[idx]
+        preprocess_func = DOC_TYPES.get(doc_type, (open, 'r'))
+        with preprocess_func[0](file_path, preprocess_func[1]) as f:
+            text = preprocess_func[0](f)
         inputs = self.tokenizer.encode_plus(
             text,
             add_special_tokens=True,
@@ -49,40 +38,43 @@ class DocumentDataset:
         )
         return inputs
 
-    def __len__(self):
-        return len(self.files)
-
-# Create dataset and data loader
-files = []
-for root, dirs, files_in_dir in os.walk(DOCUMENTS_DIR):
-    for file in files_in_dir:
+# Load files
+file_paths = []
+for root, dirs, files in os.walk(DOCUMENTS_DIR):
+    for file in files:
         file_path = os.path.join(root, file)
-        files.append(file_path)
+        doc_type = os.path.splitext(file)[1][1:]  # Extract file type
+        if doc_type in DOC_TYPES:
+            file_paths.append((file_path, doc_type))
 
-tokenizer = AutoTokenizer.from_pretrained("deepset-roberta-base-squad2", local_files_only=True)
-model = AutoModelForQuestionAnswering.from_pretrained("deepset-roberta-base-squad2", local_files_only=True)
+# Initialize tokenizer and model
+tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+model = AutoModelForQuestionAnswering.from_pretrained('bert-base-uncased')
 
-dataset = DocumentDataset(files, tokenizer)
-data_loader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
+# Create dataset and dataloader
+dataset = DocumentDataset(file_paths, tokenizer)
+dataloader = DataLoader(dataset, batch_size=32)
 
-# Fine-tune the model
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model.to(device)
-criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
+# Training arguments
+training_args = Seq2SeqTrainingArguments(
+    output_dir=MODELS_DIR,
+    per_device_train_batch_size=32,
+    per_device_eval_batch_size=64,
+    num_train_epochs=3,
+    logging_steps=10,
+    logging_dir=os.path.join(MODELS_DIR, "logs"),
+)
 
-for epoch in range(5):
-    model.train()
-    total_loss = 0
-    for batch in data_loader:
-        input_ids = batch['input_ids'].to(device)
-        attention_mask = batch['attention_mask'].to(device)
-        labels = batch['labels'].to(device)
-        optimizer.zero_grad()
-        outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-        total_loss += loss.item()
-    print(f'Epoch {epoch+1}, Loss: {total_loss / len(data_loader)}')
-    model.eval()
+# Trainer
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=dataset,
+)
+
+# Train
+trainer.train()
+
+# Save model and tokenizer
+model.save_pretrained(MODELS_DIR)
+tokenizer.save_pretrained(MODELS_DIR)

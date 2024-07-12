@@ -2,10 +2,11 @@
 
 # Paths
 BACKUP_DIR="/home/solomon/data/lose_data/backup_models"
-CACHE_DIR="$HOME/.cache/huggingface/hub"
+CACHE_DIR="$HOME/.cache/huggingface/hub/models--"
 WORKING_DIR="/home/solomon/data/lose_data"
 MODELS_DIR="$WORKING_DIR/models"
-MODELS=("deepset-roberta-base-squad2" "distilbert-base-cased-distilled-squad" "sentence-transformers-distiluse-base-multilingual-cased" "xlm-roberta-base")
+MODEL="xlm-roberta-base"
+CACHE_MODEL_DIR="$CACHE_DIR$MODEL"
 
 # Function to download and cache model
 download_model() {
@@ -13,39 +14,28 @@ download_model() {
   python -c "from transformers import AutoTokenizer, AutoModelForQuestionAnswering; AutoTokenizer.from_pretrained('$model'); AutoModelForQuestionAnswering.from_pretrained('$model')" 
 }
 
-# Download models if not already in backup
-for model in "${MODELS[@]}"; do
-  if [! -d "$BACKUP_DIR/$model" ]; then
-    echo "Downloading model: $model"
-    download_model $model
-    mkdir -p "$BACKUP_DIR/$model"
-    cp -r "$CACHE_DIR/$model/"* "$BACKUP_DIR/$model/"
-  else
-    echo "Model already exists in backup: $model"
-  fi
-done
+# Download model if not already in backup
+backup_model_dir="$BACKUP_DIR/models--$MODEL"
+if [[ ! -d "$backup_model_dir" ]]; then
+  echo "Downloading model: $MODEL"
+  download_model $MODEL
+  mkdir -p "$backup_model_dir"
+  cp -r "$CACHE_MODEL_DIR"/* "$backup_model_dir/"
+else
+  echo "Model already exists in backup: $MODEL"
+fi
 
-# Remove models from cache
-for model in "${MODELS[@]}"; do
-  echo "Removing model from cache: $model"
-  rm -rf "$CACHE_DIR/$model"
-done
+# Clear working directory
+echo "Clearing models from working directory: $MODELS_DIR"
+rm -rf "$MODELS_DIR"
+mkdir -p "$MODELS_DIR"
 
-# Remove models from working directory
-for model in "${MODELS[@]}"; do
-  echo "Removing model from working directory: $model"
-  rm -rf "$MODELS_DIR/$model"
-done
-
-# Restore pre-trained models from backup to working directory
-for model in "${MODELS[@]}"; do
-  if [! -d "$MODELS_DIR/$model" ]; then
-    echo "Restoring model from backup to working directory: $model"
-    mkdir -p "$MODELS_DIR/$model"
-    cp -r "$BACKUP_DIR/$model/"* "$MODELS_DIR/$model/"
-  else
-    echo "Model already exists in working directory: $model"
-  fi
-done
+# Restore models from backup to working directory
+if [[ -d "$backup_model_dir" ]]; then
+  echo "Restoring model from backup to working directory: $MODEL"
+  cp -r "$backup_model_dir"/* "$MODELS_DIR/"
+else
+  echo "Backup not found for model: $MODEL"
+fi
 
 echo "Model preparation completed."
