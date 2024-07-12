@@ -9,3 +9,8 @@ scikit-learn
 sqlalchemy
 sentencepiece
 sentence-transformers
+langdetect
+PyPDF2
+faiss-cpu
+pycryptodome
+PyMuPDF
