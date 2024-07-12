@@ -1,6 +1,27 @@
+import os
 import torch
 from transformers import DistilBertTokenizer, DistilBertModel
 from extract_text import extract_text
+from sqlalchemy import create_engine, Column, Integer, String, LargeBinary
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+Base = declarative_base()
+
+class Document(Base):
+    __tablename__ = 'documents'
+    id = Column(Integer, primary_key=True)
+    path = Column(String, unique=True)
+    embedding = Column(LargeBinary)
+
+DATABASE_PATH = '../data/database.db'
+DATABASE_URL = f'sqlite:///{DATABASE_PATH}'
+
+engine = create_engine(DATABASE_URL)
+Base.metadata.create_all(engine)
+
+Session = sessionmaker(bind=engine)
+session = Session()
 
 tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
 model = DistilBertModel.from_pretrained('distilbert-base-uncased')
@@ -9,17 +30,19 @@ def embed_text(text):
     inputs = tokenizer(text, return_tensors='pt', max_length=512, truncation=True)
     with torch.no_grad():
         outputs = model(**inputs)
-    return outputs.last_hidden_state.mean(dim=1)
+    return outputs.last_hidden_state.mean(dim=1).numpy()
 
-def index_documents(documents):
-    return {doc_id: embed_text(extract_text(doc_path)) for doc_id, doc_path in documents.items()}
+def index_documents(directory):
+    for root, _, files in os.walk(directory):
+        for file in files:
+            file_path = os.path.join(root, file)
+            text = extract_text(file_path)
+            if text:
+                embedding = embed_text(text)
+                doc = Document(path=file_path, embedding=embedding.tobytes())
+                session.add(doc)
+    session.commit()
 
 if __name__ == '__main__':
-    documents = {
-        'doc1': '../data/pdfs/doc1.pdf',
-        'doc2': '../data/pdfs/doc2.docx',
-        'doc3': '../data/pdfs/doc3.txt',
-        'doc4': '../data/pdfs/doc4.jpg'
-    }
-    indexed_docs = index_documents(documents)
-    torch.save(indexed_docs, '../data/indexed_docs.pt')
+    data_directory = '../data'
+    index_documents(data_directory)

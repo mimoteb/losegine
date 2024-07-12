@@ -5,3 +5,5 @@ flask
 pytesseract
 Pillow
 docx2txt
+scikit-learn
+sqlalchemy
