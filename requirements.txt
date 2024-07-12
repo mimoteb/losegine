@@ -1,0 +1,7 @@
+transformers
+torch
+pdfminer.ix
+flask
+pytesseract
+Pillow
+docx2txt
