@@ -5,7 +5,7 @@ from transformers import DistilBertTokenizer, DistilBertModel
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sklearn.metrics.pairwise import cosine_similarity
-from scripts.index_documents import Document, DATABASE_URL
+from .index_documents import Document, DATABASE_URL
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -29,7 +29,11 @@ def search(query):
     if not documents:
         logging.info('No documents found in the database.')
         return None
-    similarities = {doc.id: cosine_similarity(query_embedding, np.frombuffer(doc.embedding, dtype=np.float32).reshape(1, -1)).item() for doc in documents}
+    similarities = {}
+    for doc in documents:
+        doc_embedding = np.frombuffer(doc.embedding, dtype=np.float32)
+        similarity = cosine_similarity(query_embedding, doc_embedding.reshape(1, -1)).item()
+        similarities[doc.id] = similarity
     if not similarities:
         logging.info('No similarities found.')
         return None
