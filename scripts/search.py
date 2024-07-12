@@ -31,4 +31,17 @@ def search(query):
         return None
     similarities = {doc.id: cosine_similarity(query_embedding, np.frombuffer(doc.embedding, dtype=np.float32).reshape(1, -1)).item() for doc in documents}
     if not similarities:
-        logging.info('No similarities
+        logging.info('No similarities found.')
+        return None
+    top_doc_id = max(similarities, key=similarities.get)
+    top_doc = session.query(Document).filter_by(id=top_doc_id).first()
+    logging.info(f'Top document found: {top_doc.path}')
+    return top_doc.path
+
+if __name__ == '__main__':
+    query = "Your query here"
+    result = search(query)
+    if result:
+        print(result)
+    else:
+        print("No matching documents found.")

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Local Search Engine</title>
+</head>
+<body>
+  <div style="text-align: center; margin-top: 50px;">
+    <h1>Local Search Engine</h1>
+    <form action="/search" method="post">
+      <input type="text" name="query" placeholder="Enter your query" style="width: 300px; padding: 10px;">
+      <input type="submit" value="Search" style="padding: 10px;">
+    </form>
+    {% if results %}
+      <h2>Results:</h2>
+      <p><strong>Document Path:</strong> {{ results['document_path'] }}</p>
+      <p><strong>Answer:</strong> {{ results['answer'] }}</p>
+    {% elif no_results %}
+      <h2>No matching documents found.</h2>
+    {% endif %}
+  </div>
+</body>
+</html>
