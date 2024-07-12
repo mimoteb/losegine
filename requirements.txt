@@ -14,3 +14,7 @@ PyPDF2
 faiss-cpu
 pycryptodome
 PyMuPDF
+haystack-ai
+python-docx
+pdfminer
+pdfplumber
