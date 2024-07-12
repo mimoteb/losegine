@@ -34,8 +34,8 @@ def search(query):
         return None
     similarities = {}
     for doc in documents:
-        doc_embedding = np.frombuffer(doc.embedding, dtype=np.float32)
-        similarity = cosine_similarity(query_embedding, doc_embedding.reshape(1, -1)).item()
+        doc_embedding = np.frombuffer(doc.embedding, dtype=np.float32).reshape(1, -1)
+        similarity = cosine_similarity(query_embedding, doc_embedding).item()
         similarities[doc.id] = similarity
     if not similarities:
         logging.info('No similarities found.')

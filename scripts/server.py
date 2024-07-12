@@ -25,6 +25,7 @@ def search_endpoint():
     answer = answer_question(query, context)
     logging.info(f'Question: {query}')
     logging.info(f'Document Path: {top_doc_path}')
+    logging.info(f'Document Content: {context}')
     logging.info(f'Answer: {answer}')
     return render_template('search.html', results={'document_path': top_doc_path, 'answer': answer})
 
