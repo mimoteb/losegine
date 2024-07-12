@@ -1,7 +1,6 @@
 from flask import Flask, request, render_template
 from .search import search
 from .qa import answer_question
-from .extract_text import extract_text
 
 app = Flask(__name__, template_folder='templates')
 app.config['DEBUG'] = True
@@ -19,7 +18,7 @@ def search_endpoint():
         return render_template('search.html', no_results=True)
     results = []
     for doc, sim in top_docs:
-        context = doc.content  # Using stored content instead of re-extracting
+        context = doc.content  # Use stored content
         answer = answer_question(query, context)
         print(f'Question: {query}')
         print(f'Document Path: {doc.path}')

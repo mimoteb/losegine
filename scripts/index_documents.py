@@ -12,8 +12,6 @@ class Document(Base):
     id = Column(Integer, primary_key=True)
     path = Column(String, unique=True)
     title = Column(String)
-    language = Column(String)
-    creation_date = Column(String)
     content = Column(Text)
     embedding = Column(LargeBinary)
 
@@ -50,7 +48,6 @@ def index_documents(directory):
             if text:
                 print(f'Indexing file: {file_path}')
                 embedding = embed_text(text)
-                # Here you can add logic to extract metadata like title, language, etc.
                 doc = Document(path=file_path, title=file, content=text, embedding=embedding.tobytes())
                 session.add(doc)
                 document_count += 1

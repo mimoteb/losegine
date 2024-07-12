@@ -14,7 +14,7 @@ model_name = 'distiluse-base-multilingual-cased'
 model = SentenceTransformer(model_name)
 
 def embed_text(text):
-    return model.encode([text])[0]  # Ensure the output is a 2D array for a single text
+    return model.encode([text])[0]
 
 def search(query, top_n=5):
     print(f'Searching for query: {query}')
@@ -35,7 +35,6 @@ def search(query, top_n=5):
     top_docs = [(session.query(Document).filter_by(id=doc_id).first(), sim) for doc_id, sim in sorted_docs]
     for doc, sim in top_docs:
         print(f'Document: {doc.path} with similarity: {sim}')
-        # Record search history
         search_history = SearchHistory(query=query, document_id=doc.id, timestamp=datetime.now())
         session.add(search_history)
     session.commit()
