@@ -1,25 +1,20 @@
-import torch
 import numpy as np
-from transformers import XLMRobertaTokenizer, XLMRobertaModel
+from datetime import datetime
+from sentence_transformers import SentenceTransformer
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sklearn.metrics.pairwise import cosine_similarity
-from .index_documents import Document, DATABASE_URL
+from .models import Document, SearchHistory, DATABASE_URL
 
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-model_name = 'xlm-roberta-base'
-cache_dir = '/home/solomon/data/lose_data/models'
+model_name = 'distiluse-base-multilingual-cased'
+model = SentenceTransformer(model_name)
 
 def embed_text(text):
-    tokenizer = XLMRobertaTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
-    model = XLMRobertaModel.from_pretrained(model_name, cache_dir=cache_dir)
-    inputs = tokenizer(text, return_tensors='pt', max_length=512, truncation=True)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    return outputs.last_hidden_state.mean(dim=1).numpy()
+    return model.encode([text])[0]  # Ensure the output is a 2D array for a single text
 
 def search(query, top_n=5):
     print(f'Searching for query: {query}')
@@ -30,8 +25,8 @@ def search(query, top_n=5):
         return []
     similarities = {}
     for doc in documents:
-        doc_embedding = np.frombuffer(doc.embedding, dtype=np.float32).reshape(1, -1)
-        similarity = cosine_similarity(query_embedding, doc_embedding).item()
+        doc_embedding = np.frombuffer(doc.embedding, dtype=np.float32)
+        similarity = cosine_similarity([query_embedding], [doc_embedding]).item()
         similarities[doc.id] = similarity
     if not similarities:
         print('No similarities found.')
@@ -40,6 +35,10 @@ def search(query, top_n=5):
     top_docs = [(session.query(Document).filter_by(id=doc_id).first(), sim) for doc_id, sim in sorted_docs]
     for doc, sim in top_docs:
         print(f'Document: {doc.path} with similarity: {sim}')
+        # Record search history
+        search_history = SearchHistory(query=query, document_id=doc.id, timestamp=datetime.now())
+        session.add(search_history)
+    session.commit()
     return top_docs
 
 if __name__ == '__main__':

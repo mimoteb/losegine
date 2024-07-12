@@ -1,10 +1,9 @@
 import os
-import torch
-from transformers import XLMRobertaTokenizer, XLMRobertaModel
-from .extract_text import extract_text
-from sqlalchemy import create_engine, Column, Integer, String, LargeBinary
+from sentence_transformers import SentenceTransformer
+from sqlalchemy import create_engine, Column, Integer, String, LargeBinary, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from .extract_text import extract_text
 
 Base = declarative_base()
 
@@ -12,6 +11,10 @@ class Document(Base):
     __tablename__ = 'documents'
     id = Column(Integer, primary_key=True)
     path = Column(String, unique=True)
+    title = Column(String)
+    language = Column(String)
+    creation_date = Column(String)
+    content = Column(Text)
     embedding = Column(LargeBinary)
 
 DATABASE_PATH = '/home/solomon/data/lose_data/database.db'
@@ -23,17 +26,11 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-model_name = 'xlm-roberta-base'
-cache_dir = '/home/solomon/data/lose_data/models'
-
-tokenizer = XLMRobertaTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
-model = XLMRobertaModel.from_pretrained(model_name, cache_dir=cache_dir)
+model_name = 'distiluse-base-multilingual-cased'
+model = SentenceTransformer(model_name)
 
 def embed_text(text):
-    inputs = tokenizer(text, return_tensors='pt', max_length=512, truncation=True)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    return outputs.last_hidden_state.mean(dim=1).numpy()
+    return model.encode(text)
 
 def index_documents(directory):
     if not os.path.exists(directory):
@@ -44,7 +41,6 @@ def index_documents(directory):
     for root, _, files in os.walk(directory):
         for file in files:
             file_path = os.path.join(root, file)
-            # Check if the document already exists
             existing_doc = session.query(Document).filter_by(path=file_path).first()
             if existing_doc:
                 print(f'Document already exists in the database: {file_path}')
@@ -54,7 +50,8 @@ def index_documents(directory):
             if text:
                 print(f'Indexing file: {file_path}')
                 embedding = embed_text(text)
-                doc = Document(path=file_path, embedding=embedding.tobytes())
+                # Here you can add logic to extract metadata like title, language, etc.
+                doc = Document(path=file_path, title=file, content=text, embedding=embedding.tobytes())
                 session.add(doc)
                 document_count += 1
             else:
@@ -62,7 +59,6 @@ def index_documents(directory):
     session.commit()
     print(f'Indexing completed. {document_count} documents indexed.')
 
-    # Verify indexed documents
     documents = session.query(Document).all()
     print(f'{len(documents)} documents found in the database.')
     for doc in documents:

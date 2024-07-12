@@ -14,12 +14,12 @@ def home():
 def search_endpoint():
     query = request.form['query']
     print(f'Received search query: {query}')
-    top_docs = search(query, top_n=3)  # Return top 3 results
+    top_docs = search(query, top_n=3)
     if not top_docs:
         return render_template('search.html', no_results=True)
     results = []
     for doc, sim in top_docs:
-        context = extract_text(doc.path)
+        context = doc.content  # Using stored content instead of re-extracting
         answer = answer_question(query, context)
         print(f'Question: {query}')
         print(f'Document Path: {doc.path}')
