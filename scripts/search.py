@@ -21,13 +21,19 @@ def embed_text(text):
 def search(query):
     query_embedding = embed_text(query)
     documents = session.query(Document).all()
-    similarities = {doc.id: cosine_similarity(np.frombuffer(query_embedding, dtype=np.float32), 
-                                              np.frombuffer(doc.embedding, dtype=np.float32).reshape(1, -1)).item() 
-                    for doc in documents}
+    if not documents:
+        return None
+    similarities = {doc.id: cosine_similarity(query_embedding, np.frombuffer(doc.embedding, dtype=np.float32).reshape(1, -1)).item() for doc in documents}
+    if not similarities:
+        return None
     top_doc_id = max(similarities, key=similarities.get)
     top_doc = session.query(Document).filter_by(id=top_doc_id).first()
     return top_doc.path
 
 if __name__ == '__main__':
     query = "Your query here"
-    print(search(query))
+    result = search(query)
+    if result:
+        print(result)
+    else:
+        print("No matching documents found.")

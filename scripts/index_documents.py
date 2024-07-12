@@ -1,10 +1,14 @@
 import os
 import torch
+import logging
 from transformers import DistilBertTokenizer, DistilBertModel
 from scripts.extract_text import extract_text
 from sqlalchemy import create_engine, Column, Integer, String, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 Base = declarative_base()
 
@@ -36,13 +40,17 @@ def index_documents(directory):
     for root, _, files in os.walk(directory):
         for file in files:
             file_path = os.path.join(root, file)
+            logging.info(f'Reading file: {file_path}')
             text = extract_text(file_path)
             if text:
+                logging.info(f'Indexing file: {file_path}')
                 embedding = embed_text(text)
                 doc = Document(path=file_path, embedding=embedding.tobytes())
                 session.add(doc)
     session.commit()
+    logging.info('Indexing completed.')
 
 if __name__ == '__main__':
     data_directory = '/home/solomon/data/lose_data/documents'
+    logging.info(f'Starting indexing for directory: {data_directory}')
     index_documents(data_directory)

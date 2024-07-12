@@ -26,6 +26,8 @@ HTML_TEMPLATE = '''
         <h2>Results:</h2>
         <p><strong>Document Path:</strong> {{ results['document_path'] }}</p>
         <p><strong>Answer:</strong> {{ results['answer'] }}</p>
+      {% elif no_results %}
+        <h2>No matching documents found.</h2>
       {% endif %}
     </div>
   </body>
@@ -40,6 +42,8 @@ def home():
 def search_endpoint():
     query = request.form['query']
     top_doc_path = search(query)
+    if not top_doc_path:
+        return render_template_string(HTML_TEMPLATE, no_results=True)
     context = extract_text(top_doc_path)
     answer = answer_question(query, context)
     return render_template_string(HTML_TEMPLATE, results={'document_path': top_doc_path, 'answer': answer})
