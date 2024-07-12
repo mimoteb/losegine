@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from transformers import DistilBertTokenizer, DistilBertModel
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sklearn.metrics.pairwise import cosine_similarity
