@@ -24,7 +24,7 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-model_name = 'distiluse-base-multilingual-cased'
+model_name = 'xlm-roberta-base'
 model = SentenceTransformer(model_name)
 
 def embed_text(text):
