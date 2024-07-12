@@ -1,7 +1,7 @@
 from transformers import pipeline
 
 # Specify the model explicitly and cache directory
-model_name = 'distilbert-base-cased-distilled-squad'
+model_name = 'xlm-roberta-base'
 cache_dir = '/home/solomon/data/lose_data/models'
 
 # Load the QA pipeline

@@ -1,7 +1,7 @@
 import os
 import torch
 import logging
-from transformers import DistilBertTokenizer, DistilBertModel
+from transformers import XLMRobertaTokenizer, XLMRobertaModel
 from .extract_text import extract_text
 from sqlalchemy import create_engine, Column, Integer, String, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
@@ -27,11 +27,11 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-model_name = 'distilbert-base-uncased'
+model_name = 'xlm-roberta-base'
 cache_dir = '/home/solomon/data/lose_data/models'
 
-tokenizer = DistilBertTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
-model = DistilBertModel.from_pretrained(model_name, cache_dir=cache_dir)
+tokenizer = XLMRobertaTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
+model = XLMRobertaModel.from_pretrained(model_name, cache_dir=cache_dir)
 
 def embed_text(text):
     inputs = tokenizer(text, return_tensors='pt', max_length=512, truncation=True)

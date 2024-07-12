@@ -4,6 +4,10 @@ from PIL import Image
 import pytesseract
 import logging
 
+# Configure Tesseract to recognize both English and German text
+pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'  # Path to tesseract executable
+custom_oem_psm_config = r'--oem 3 --psm 6 -l eng+deu'
+
 def extract_text_from_docx(file_path):
     try:
         return docx2txt.process(file_path)
@@ -22,7 +26,7 @@ def extract_text_from_txt(file_path):
 def extract_text_from_image(file_path):
     try:
         img = Image.open(file_path)
-        text = pytesseract.image_to_string(img)
+        text = pytesseract.image_to_string(img, config=custom_oem_psm_config)
         return text
     except pytesseract.TesseractNotFoundError as e:
         logging.error(f'Tesseract not found: {e}')
