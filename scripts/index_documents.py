@@ -37,6 +37,7 @@ def embed_text(text):
     return outputs.last_hidden_state.mean(dim=1).numpy()
 
 def index_documents(directory):
+    document_count = 0
     for root, _, files in os.walk(directory):
         for file in files:
             file_path = os.path.join(root, file)
@@ -47,10 +48,17 @@ def index_documents(directory):
                 embedding = embed_text(text)
                 doc = Document(path=file_path, embedding=embedding.tobytes())
                 session.add(doc)
+                document_count += 1
     session.commit()
-    logging.info('Indexing completed.')
+    logging.info(f'Indexing completed. {document_count} documents indexed.')
 
 if __name__ == '__main__':
     data_directory = '/home/solomon/data/lose_data/documents'
     logging.info(f'Starting indexing for directory: {data_directory}')
     index_documents(data_directory)
+
+    # Verify indexed documents
+    documents = session.query(Document).all()
+    logging.info(f'{len(documents)} documents found in the database.')
+    for doc in documents:
+        logging.info(f'Document: {doc.path}')

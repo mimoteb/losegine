@@ -1,7 +1,11 @@
 from flask import Flask, request, jsonify, render_template_string
+import logging
 from search import search
 from qa import answer_question
 from extract_text import extract_text
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
@@ -41,6 +45,7 @@ def home():
 @app.route('/search', methods=['POST'])
 def search_endpoint():
     query = request.form['query']
+    logging.info(f'Received search query: {query}')
     top_doc_path = search(query)
     if not top_doc_path:
         return render_template_string(HTML_TEMPLATE, no_results=True)
