@@ -14,7 +14,7 @@ class Document(Base):
     path = Column(String, unique=True)
     embedding = Column(LargeBinary)
 
-DATABASE_PATH = '../data/database.db'
+DATABASE_PATH = '/home/solomon/data/lose_data/database.db'
 DATABASE_URL = f'sqlite:///{DATABASE_PATH}'
 
 engine = create_engine(DATABASE_URL)
@@ -23,8 +23,8 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-model = DistilBertModel.from_pretrained('distilbert-base-uncased')
+tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased', cache_dir='/home/solomon/data/lose_data/models')
+model = DistilBertModel.from_pretrained('distilbert-base-uncased', cache_dir='/home/solomon/data/lose_data/models')
 
 def embed_text(text):
     inputs = tokenizer(text, return_tensors='pt', max_length=512, truncation=True)
@@ -44,5 +44,5 @@ def index_documents(directory):
     session.commit()
 
 if __name__ == '__main__':
-    data_directory = '../data'
+    data_directory = '/home/solomon/data/lose_data/documents'
     index_documents(data_directory)
