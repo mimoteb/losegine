@@ -15,7 +15,7 @@ def search_endpoint():
     print(f'Received search query: {query}')
     top_docs = search(query, top_n=3)
     if not top_docs:
-        return render_template('search.html', no_results=True)
+        return render_template('search.html', no_results=True, query=query)
     results = []
     for doc, sim in top_docs:
         context = doc.content  # Use stored content
@@ -24,7 +24,7 @@ def search_endpoint():
         print(f'Document Path: {doc.path}')
         print(f'Answer: {answer}')
         results.append({'document_path': doc.path, 'answer': answer, 'similarity': sim})
-    return render_template('search.html', results=results)
+    return render_template('search.html', results=results, query=query)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

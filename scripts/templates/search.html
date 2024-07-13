@@ -15,6 +15,10 @@
             <button type="submit" class="btn btn-primary">Search</button>
         </form>
         <hr>
+        {% if query %}
+            <h2>Question: {{ query }}</h2>
+            <hr>
+        {% endif %}
         {% if no_results %}
             <p>No results found.</p>
         {% else %}
