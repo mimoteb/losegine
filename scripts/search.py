@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sklearn.metrics.pairwise import cosine_similarity
 from .models import Document, SearchHistory, DATABASE_URL
+from .qa import answer_question
 
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
@@ -29,31 +30,34 @@ def search(query, top_n=5):
     if not documents:
         print('No documents found in the database.')
         return []
-    similarities = {}
+    similarities = []
     for doc in documents:
         doc_embedding = np.frombuffer(doc.embedding, dtype=np.float32)
         if doc_embedding.shape[0] != query_embedding.shape[0]:
             print(f'Dimension mismatch: {doc_embedding.shape[0]} vs {query_embedding.shape[0]}')
             continue
         similarity = cosine_similarity([query_embedding], [doc_embedding]).item()
-        similarities[doc.id] = similarity
+        similarities.append((doc, similarity))
     if not similarities:
         print('No similarities found.')
         return []
-    sorted_docs = sorted(similarities.items(), key=lambda item: item[1], reverse=True)[:top_n]
-    top_docs = [(session.query(Document).filter_by(id=doc_id).first(), sim) for doc_id, sim in sorted_docs]
-    for doc, sim in top_docs:
+    sorted_docs = sorted(similarities, key=lambda item: item[1], reverse=True)[:top_n]
+    results = []
+    for doc, sim in sorted_docs:
         print(f'Document: {doc.path} with similarity: {sim}')
+        # Provide more context by using larger parts of the document content
+        answer = answer_question(query, doc.content)
+        results.append({'document_path': doc.path, 'answer': answer, 'similarity': sim})
         search_history = SearchHistory(query=query, document_id=doc.id, timestamp=datetime.now())
         session.add(search_history)
     session.commit()
-    return top_docs
+    return results
 
 if __name__ == '__main__':
     query = "Your query here"
     results = search(query, top_n=3)
     if results:
         for result in results:
-            print(f'Document: {result[0].path}, Similarity: {result[1]}')
+            print(f'Document: {result["document_path"]}, Answer: {result["answer"]}, Similarity: {result["similarity"]}')
     else:
         print("No matching documents found.")
