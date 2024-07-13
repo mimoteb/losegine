@@ -1,4 +1,3 @@
-# server.py
 from flask import Flask, request, render_template
 from .search import search
 from .qa import answer_question

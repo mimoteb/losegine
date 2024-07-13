@@ -42,22 +42,13 @@ def search(query, top_n=5):
         print('No similarities found.')
         return []
     sorted_docs = sorted(similarities, key=lambda item: item[1], reverse=True)[:top_n]
-    results = []
-    for doc, sim in sorted_docs:
-        print(f'Document: {doc.path} with similarity: {sim}')
-        # Provide more context by using larger parts of the document content
-        answer = answer_question(query, doc.content)
-        results.append({'document_path': doc.path, 'answer': answer, 'similarity': sim})
-        search_history = SearchHistory(query=query, document_id=doc.id, timestamp=datetime.now())
-        session.add(search_history)
-    session.commit()
-    return results
+    return sorted_docs
 
 if __name__ == '__main__':
     query = "Your query here"
     results = search(query, top_n=3)
     if results:
-        for result in results:
-            print(f'Document: {result["document_path"]}, Answer: {result["answer"]}, Similarity: {result["similarity"]}')
+        for doc, sim in results:
+            print(f'Document: {doc.path}, Similarity: {sim}')
     else:
         print("No matching documents found.")
