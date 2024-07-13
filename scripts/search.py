@@ -1,6 +1,7 @@
 import numpy as np
 from datetime import datetime
-from sentence_transformers import SentenceTransformer
+from transformers import AutoTokenizer, AutoModel
+import torch
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sklearn.metrics.pairwise import cosine_similarity
@@ -10,11 +11,16 @@ engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-model_name = 'sentence-transformers/paraphrase-xlm-r-multilingual-v1'
-model = SentenceTransformer(model_name)
+model_name = 'xlm-roberta-base'
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModel.from_pretrained(model_name)
 
 def embed_text(text):
-    return model.encode([text])[0]
+    inputs = tokenizer(text, return_tensors='pt', truncation=True, padding=True, max_length=512)
+    with torch.no_grad():
+        outputs = model(**inputs)
+    embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+    return embeddings
 
 def search(query, top_n=5):
     print(f'Searching for query: {query}')

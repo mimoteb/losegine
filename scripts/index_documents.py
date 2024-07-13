@@ -1,5 +1,6 @@
 import os
-from sentence_transformers import SentenceTransformer
+from transformers import AutoTokenizer, AutoModel
+import torch
 from sqlalchemy import create_engine, Column, Integer, String, LargeBinary, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -25,10 +26,16 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 model_name = 'xlm-roberta-base'
-model = SentenceTransformer(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModel.from_pretrained(model_name)
 
-def embed_text(text):
-    return model.encode(text)
+def embed_text(text, path):
+    combined_text = f"{text} {path}"
+    inputs = tokenizer(combined_text, return_tensors='pt', truncation=True, padding=True, max_length=512)
+    with torch.no_grad():
+        outputs = model(**inputs)
+    embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+    return embeddings
 
 def index_documents(directory):
     if not os.path.exists(directory):
@@ -47,7 +54,7 @@ def index_documents(directory):
             text = extract_text(file_path)
             if text:
                 print(f'Indexing file: {file_path}')
-                embedding = embed_text(text)
+                embedding = embed_text(text, file_path)
                 doc = Document(path=file_path, title=file, content=text, embedding=embedding.tobytes())
                 session.add(doc)
                 document_count += 1
